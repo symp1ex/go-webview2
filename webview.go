@@ -6,13 +6,13 @@ package webview2
 import (
 	"encoding/json"
 	"errors"
+	"github.com/symp1ex/go-webview2/internal/w32"
 	"log"
 	"reflect"
 	"strconv"
 	"sync"
 	"unsafe"
 
-	"github.com/jchv/go-webview2/internal/w32"
 	"github.com/jchv/go-webview2/pkg/edge"
 
 	"golang.org/x/sys/windows"
@@ -64,6 +64,9 @@ type WindowOptions struct {
 	Height uint
 	IconId uint
 	Center bool
+
+	X *int
+	Y *int
 }
 
 type WebViewOptions struct {
@@ -303,18 +306,22 @@ func (w *webview) CreateWithOptions(opts WindowOptions) bool {
 		windowHeight = 480
 	}
 
-	var posX, posY uint
-	if opts.Center {
+	var posX, posY int
+	if opts.X != nil && opts.Y != nil {
+		posX = *opts.X
+		posY = *opts.Y
+	} else if opts.Center {
 		// get screen size
 		screenWidth, _, _ := w32.User32GetSystemMetrics.Call(w32.SM_CXSCREEN)
 		screenHeight, _, _ := w32.User32GetSystemMetrics.Call(w32.SM_CYSCREEN)
+
 		// calculate window position
-		posX = (uint(screenWidth) - windowWidth) / 2
-		posY = (uint(screenHeight) - windowHeight) / 2
+		posX = (int(screenWidth) - int(windowWidth)) / 2
+		posY = (int(screenHeight) - int(windowHeight)) / 2
 	} else {
 		// use default position
-		posX = w32.CW_USEDEFAULT
-		posY = w32.CW_USEDEFAULT
+		posX = int(w32.CW_USEDEFAULT)
+		posY = int(w32.CW_USEDEFAULT)
 	}
 
 	w.hwnd, _, _ = w32.User32CreateWindowExW.Call(
